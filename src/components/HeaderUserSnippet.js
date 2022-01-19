@@ -24,11 +24,29 @@ class HeaderUserSnippet extends React.Component {
 
   componentDidMount() {
     const keycloak = Keycloak('/keycloak.json');
+    console.log('Iniciando autenticação');
     keycloak.init({
       //onLoad: 'login-required'
-      onLoad: 'check-sso'
+      onLoad: 'check-sso',
+      checkLoginIframe: false,
     }).then(authenticated => {
-      this.setState({ keycloak: keycloak, authenticated: authenticated })
+      this.setState({ keycloak: keycloak, authenticated: authenticated }, () => {
+        console.log('Callback depois de setar state');
+        
+        keycloak.loadUserInfo().then(userInfo => {
+          this.setState({
+            name: userInfo.name, 
+            email: userInfo.email, 
+            id: userInfo.sub,
+            initials: this.getInitials(userInfo.name),
+          })
+        });
+        console.log('Pegou Userinfo');
+      });
+      console.log('Autenticado 1');
+      if(authenticated) {
+        
+      }
     });
   }
 
@@ -77,6 +95,7 @@ class HeaderUserSnippet extends React.Component {
   }
 
   renderLoggedIn() {
+    console.log('Renderizando Logado');
     return (
       <>
         <CNavItem>
@@ -99,14 +118,6 @@ class HeaderUserSnippet extends React.Component {
 
     if (this.state.keycloak) {
       if (this.state.authenticated) {
-        this.state.keycloak.loadUserInfo().then(userInfo => {
-          this.setState({
-            name: userInfo.name, 
-            email: userInfo.email, 
-            id: userInfo.sub,
-            initials: this.getInitials(userInfo.name),
-          })
-        });
         navBar = this.renderLoggedIn();
       }
       else {
